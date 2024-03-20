@@ -1,0 +1,591 @@
+CUSTOMER ASSISTANCE REQUESTS ANALYSIS
+
+PACKAGES/MODULES USED : NUMPY, PANDAS, MATPLOTLIB, SEABORN, DATETIME, SCIPY
+--------------------------------------------------------------------------------------------------------------
+Solution :
+1. Importing the Dataset and doing Data Preprocessing on the dataset
+
+# importing required libraries
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib import style
+%matplotlib inline
+import seaborn as sns
+import datetime
+
+from scipy.stats import chi2_contingency
+from scipy.stats import chi2
+
+# reading the dataset
+# Note: Our Dataset is very large so setting low_memory to false
+dataset = pd.read_csv('311_Service_Requests_from_2010_to_Present.csv', low_memory = False)
+
+# View the top 5 elements of the dataset
+dataset.head(5)
+
+	Unique Key 	Created Date 	Closed Date 	Agency 	Agency Name 	Complaint Type 	Descriptor 	Location Type 	Incident Zip 	Incident Address 	... 	Bridge Highway Name 	Bridge Highway Direction 	Road Ramp 	Bridge Highway Segment 	Garage Lot Name 	Ferry Direction 	Ferry Terminal Name 	Latitude 	Longitude 	Location
+0 	32310363 	12/31/2015 11:59:45 PM 	01-01-16 0:55 	NYPD 	New York City Police Department 	Noise - Street/Sidewalk 	Loud Music/Party 	Street/Sidewalk 	10034.0 	71 VERMILYEA AVENUE 	... 	NaN 	NaN 	NaN 	NaN 	NaN 	NaN 	NaN 	40.865682 	-73.923501 	(40.86568153633767, -73.92350095571744)
+1 	32309934 	12/31/2015 11:59:44 PM 	01-01-16 1:26 	NYPD 	New York City Police Department 	Blocked Driveway 	No Access 	Street/Sidewalk 	11105.0 	27-07 23 AVENUE 	... 	NaN 	NaN 	NaN 	NaN 	NaN 	NaN 	NaN 	40.775945 	-73.915094 	(40.775945312321085, -73.91509393898605)
+2 	32309159 	12/31/2015 11:59:29 PM 	01-01-16 4:51 	NYPD 	New York City Police Department 	Blocked Driveway 	No Access 	Street/Sidewalk 	10458.0 	2897 VALENTINE AVENUE 	... 	NaN 	NaN 	NaN 	NaN 	NaN 	NaN 	NaN 	40.870325 	-73.888525 	(40.870324522111424, -73.88852464418646)
+3 	32305098 	12/31/2015 11:57:46 PM 	01-01-16 7:43 	NYPD 	New York City Police Department 	Illegal Parking 	Commercial Overnight Parking 	Street/Sidewalk 	10461.0 	2940 BAISLEY AVENUE 	... 	NaN 	NaN 	NaN 	NaN 	NaN 	NaN 	NaN 	40.835994 	-73.828379 	(40.83599404683083, -73.82837939584206)
+4 	32306529 	12/31/2015 11:56:58 PM 	01-01-16 3:24 	NYPD 	New York City Police Department 	Illegal Parking 	Blocked Sidewalk 	Street/Sidewalk 	11373.0 	87-14 57 ROAD 	... 	NaN 	NaN 	NaN 	NaN 	NaN 	NaN 	NaN 	40.733060 	-73.874170 	(40.733059618956815, -73.87416975810375)
+
+5 rows × 53 columns
+
+# shape of the dataset
+dataset.shape
+
+(300698, 53)
+
+dataset.info()
+
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 300698 entries, 0 to 300697
+Data columns (total 53 columns):
+ #   Column                          Non-Null Count   Dtype  
+---  ------                          --------------   -----  
+ 0   Unique Key                      300698 non-null  int64  
+ 1   Created Date                    300698 non-null  object 
+ 2   Closed Date                     298534 non-null  object 
+ 3   Agency                          300698 non-null  object 
+ 4   Agency Name                     300698 non-null  object 
+ 5   Complaint Type                  300698 non-null  object 
+ 6   Descriptor                      294784 non-null  object 
+ 7   Location Type                   300567 non-null  object 
+ 8   Incident Zip                    298083 non-null  float64
+ 9   Incident Address                256288 non-null  object 
+ 10  Street Name                     256288 non-null  object 
+ 11  Cross Street 1                  251419 non-null  object 
+ 12  Cross Street 2                  250919 non-null  object 
+ 13  Intersection Street 1           43858 non-null   object 
+ 14  Intersection Street 2           43362 non-null   object 
+ 15  Address Type                    297883 non-null  object 
+ 16  City                            298084 non-null  object 
+ 17  Landmark                        349 non-null     object 
+ 18  Facility Type                   298527 non-null  object 
+ 19  Status                          300698 non-null  object 
+ 20  Due Date                        300695 non-null  object 
+ 21  Resolution Description          300698 non-null  object 
+ 22  Resolution Action Updated Date  298511 non-null  object 
+ 23  Community Board                 300698 non-null  object 
+ 24  Borough                         300698 non-null  object 
+ 25  X Coordinate (State Plane)      297158 non-null  float64
+ 26  Y Coordinate (State Plane)      297158 non-null  float64
+ 27  Park Facility Name              300698 non-null  object 
+ 28  Park Borough                    300698 non-null  object 
+ 29  School Name                     300698 non-null  object 
+ 30  School Number                   300698 non-null  object 
+ 31  School Region                   300697 non-null  object 
+ 32  School Code                     300697 non-null  object 
+ 33  School Phone Number             300698 non-null  object 
+ 34  School Address                  300698 non-null  object 
+ 35  School City                     300698 non-null  object 
+ 36  School State                    300698 non-null  object 
+ 37  School Zip                      300697 non-null  object 
+ 38  School Not Found                300698 non-null  object 
+ 39  School or Citywide Complaint    0 non-null       float64
+ 40  Vehicle Type                    0 non-null       float64
+ 41  Taxi Company Borough            0 non-null       float64
+ 42  Taxi Pick Up Location           0 non-null       float64
+ 43  Bridge Highway Name             243 non-null     object 
+ 44  Bridge Highway Direction        243 non-null     object 
+ 45  Road Ramp                       213 non-null     object 
+ 46  Bridge Highway Segment          213 non-null     object 
+ 47  Garage Lot Name                 0 non-null       float64
+ 48  Ferry Direction                 1 non-null       object 
+ 49  Ferry Terminal Name             2 non-null       object 
+ 50  Latitude                        297158 non-null  float64
+ 51  Longitude                       297158 non-null  float64
+ 52  Location                        297158 non-null  object 
+dtypes: float64(10), int64(1), object(42)
+memory usage: 121.6+ MB
+
+There are a lot of columns in our dataset but I don't need all of them. So I will drop the columns that have a very large number of null values in it. Also I don't need the unnecessary columns, so I will drop them.
+
+# viewing the columns
+dataset.columns
+
+Index(['Unique Key', 'Created Date', 'Closed Date', 'Agency', 'Agency Name',
+       'Complaint Type', 'Descriptor', 'Location Type', 'Incident Zip',
+       'Incident Address', 'Street Name', 'Cross Street 1', 'Cross Street 2',
+       'Intersection Street 1', 'Intersection Street 2', 'Address Type',
+       'City', 'Landmark', 'Facility Type', 'Status', 'Due Date',
+       'Resolution Description', 'Resolution Action Updated Date',
+       'Community Board', 'Borough', 'X Coordinate (State Plane)',
+       'Y Coordinate (State Plane)', 'Park Facility Name', 'Park Borough',
+       'School Name', 'School Number', 'School Region', 'School Code',
+       'School Phone Number', 'School Address', 'School City', 'School State',
+       'School Zip', 'School Not Found', 'School or Citywide Complaint',
+       'Vehicle Type', 'Taxi Company Borough', 'Taxi Pick Up Location',
+       'Bridge Highway Name', 'Bridge Highway Direction', 'Road Ramp',
+       'Bridge Highway Segment', 'Garage Lot Name', 'Ferry Direction',
+       'Ferry Terminal Name', 'Latitude', 'Longitude', 'Location'],
+      dtype='object')
+
+    Columns with most of its values as null are dropped
+    Agency and Agency Name are more or less same, so I am dropping Agency Name
+    Dropping other unnecessary columns like Location, Incident Adrress, Street Name, X Coordinate (State Plane), Y Coordinate (State Plane) as we are already considering LATITUDE and LONGITUDE
+    Dropping other unnecessary columns
+
+# dropping the irrelevant columns
+drop_columns = ['Agency Name','Incident Address','Street Name','Cross Street 1','Cross Street 2','Intersection Street 1',
+'Intersection Street 2','Address Type','Park Facility Name','Park Borough','School Name',
+'School Number','School Region','School Code','School Phone Number','School Address','School City',
+'School State','School Zip','School Not Found','School or Citywide Complaint','Vehicle Type',
+'Taxi Company Borough','Taxi Pick Up Location','Bridge Highway Name','Bridge Highway Direction',
+'Road Ramp','Bridge Highway Segment','Garage Lot Name','Ferry Direction','Ferry Terminal Name','Landmark',
+'X Coordinate (State Plane)','Y Coordinate (State Plane)','Due Date','Resolution Action Updated Date','Community Board','Facility Type',
+'Location']
+
+dataset = dataset.drop(drop_columns, axis=1)
+
+# checking the shape of our dataset
+dataset.shape
+
+(300698, 14)
+
+So we are upto 14 columns from 53...That's a lot of reduction !
+
+    Now check for null values, data type of the columns etc.
+
+# checking the info of the dataset
+dataset.info()
+
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 300698 entries, 0 to 300697
+Data columns (total 14 columns):
+ #   Column                  Non-Null Count   Dtype  
+---  ------                  --------------   -----  
+ 0   Unique Key              300698 non-null  int64  
+ 1   Created Date            300698 non-null  object 
+ 2   Closed Date             298534 non-null  object 
+ 3   Agency                  300698 non-null  object 
+ 4   Complaint Type          300698 non-null  object 
+ 5   Descriptor              294784 non-null  object 
+ 6   Location Type           300567 non-null  object 
+ 7   Incident Zip            298083 non-null  float64
+ 8   City                    298084 non-null  object 
+ 9   Status                  300698 non-null  object 
+ 10  Resolution Description  300698 non-null  object 
+ 11  Borough                 300698 non-null  object 
+ 12  Latitude                297158 non-null  float64
+ 13  Longitude               297158 non-null  float64
+dtypes: float64(3), int64(1), object(10)
+memory usage: 32.1+ MB
+
+# checking the number of null values in the columns
+dataset.isnull().sum()
+
+Unique Key                   0
+Created Date                 0
+Closed Date               2164
+Agency                       0
+Complaint Type               0
+Descriptor                5914
+Location Type              131
+Incident Zip              2615
+City                      2614
+Status                       0
+Resolution Description       0
+Borough                      0
+Latitude                  3540
+Longitude                 3540
+dtype: int64
+
+# choosing the closed cases only to eliminate the null values
+
+dataset = dataset[dataset['Status'] == 'Closed']
+
+dataset.isnull().sum()
+
+Unique Key                   0
+Created Date                 0
+Closed Date                  0
+Agency                       0
+Complaint Type               0
+Descriptor                5903
+Location Type               65
+Incident Zip               507
+City                       506
+Status                       0
+Resolution Description       0
+Borough                      0
+Latitude                  1432
+Longitude                 1432
+dtype: int64
+
+# since all the cases are of closed cases we can now drop the column Status as every value of its data are same
+dataset = dataset.drop(['Status'], axis = 1)
+
+dataset.shape
+
+(298471, 13)
+
+# out of the remaining columns only Descriptor, Latitude and Longitude has over 1k null values
+dataset = dataset[(dataset['Descriptor'].notnull()) & (dataset['Latitude'].notnull()) &(dataset['Longitude'].notnull())]
+
+dataset.info()
+
+<class 'pandas.core.frame.DataFrame'>
+Int64Index: 291204 entries, 0 to 300697
+Data columns (total 13 columns):
+ #   Column                  Non-Null Count   Dtype  
+---  ------                  --------------   -----  
+ 0   Unique Key              291204 non-null  int64  
+ 1   Created Date            291204 non-null  object 
+ 2   Closed Date             291204 non-null  object 
+ 3   Agency                  291204 non-null  object 
+ 4   Complaint Type          291204 non-null  object 
+ 5   Descriptor              291204 non-null  object 
+ 6   Location Type           291149 non-null  object 
+ 7   Incident Zip            291164 non-null  float64
+ 8   City                    291164 non-null  object 
+ 9   Resolution Description  291204 non-null  object 
+ 10  Borough                 291204 non-null  object 
+ 11  Latitude                291204 non-null  float64
+ 12  Longitude               291204 non-null  float64
+dtypes: float64(3), int64(1), object(9)
+memory usage: 31.1+ MB
+
+# rechecking remaining null values
+dataset.isnull().sum()
+
+Unique Key                 0
+Created Date               0
+Closed Date                0
+Agency                     0
+Complaint Type             0
+Descriptor                 0
+Location Type             55
+Incident Zip              40
+City                      40
+Resolution Description     0
+Borough                    0
+Latitude                   0
+Longitude                  0
+dtype: int64
+
+# still there are few null values in our dataset. we will remove them
+dataset = dataset[(dataset['Location Type'].notnull()) & (dataset['Incident Zip'].notnull()) &(dataset['City'].notnull())]
+
+# rechecking for null values
+dataset.isnull().sum()
+
+Unique Key                0
+Created Date              0
+Closed Date               0
+Agency                    0
+Complaint Type            0
+Descriptor                0
+Location Type             0
+Incident Zip              0
+City                      0
+Resolution Description    0
+Borough                   0
+Latitude                  0
+Longitude                 0
+dtype: int64
+
+-- So all Null values are removed from our dataset
+
+# checking the shape our datset
+dataset.shape
+
+(291107, 13)
+
+2. Read or convert the columns ‘Created Date’ and Closed Date’ to datetime datatype and create a new column ‘Request_Closing_Time’ as the time elapsed between request creation and request closing. (Hint: Explore the package/module datetime)
+
+# converting 'Created Date' and 'Closed Date' to datetime datatype
+
+cols = ['Created Date', 'Closed Date']
+for col in cols:
+    dataset[col] = pd.to_datetime(dataset[col],infer_datetime_format=True)
+    
+# creating a new column Request_Closing_Time
+dataset['Request_Closing_Time'] = dataset[cols[1]] - dataset[cols[0]]
+
+# viewing the info to see the data types
+dataset.info()
+
+<class 'pandas.core.frame.DataFrame'>
+Int64Index: 291107 entries, 0 to 300697
+Data columns (total 14 columns):
+ #   Column                  Non-Null Count   Dtype          
+---  ------                  --------------   -----          
+ 0   Unique Key              291107 non-null  int64          
+ 1   Created Date            291107 non-null  datetime64[ns] 
+ 2   Closed Date             291107 non-null  datetime64[ns] 
+ 3   Agency                  291107 non-null  object         
+ 4   Complaint Type          291107 non-null  object         
+ 5   Descriptor              291107 non-null  object         
+ 6   Location Type           291107 non-null  object         
+ 7   Incident Zip            291107 non-null  float64        
+ 8   City                    291107 non-null  object         
+ 9   Resolution Description  291107 non-null  object         
+ 10  Borough                 291107 non-null  object         
+ 11  Latitude                291107 non-null  float64        
+ 12  Longitude               291107 non-null  float64        
+ 13  Request_Closing_Time    291107 non-null  timedelta64[ns]
+dtypes: datetime64[ns](2), float64(3), int64(1), object(7), timedelta64[ns](1)
+memory usage: 33.3+ MB
+
+ 
+
+3. Provide major insights/patterns that you can offer in a visual format (graphs or tables); at least 4 major conclusions that you can come up with after generic data mining.
+
+# applying describe on the dataset
+dataset.describe()
+
+	Unique Key 	Incident Zip 	Latitude 	Longitude 	Request_Closing_Time
+count 	2.911070e+05 	291107.000000 	291107.000000 	291107.000000 	291107
+mean 	3.130158e+07 	10857.977349 	40.725681 	-73.925035 	0 days 04:18:32.132665995
+std 	5.753777e+05 	580.280774 	0.082411 	0.078654 	0 days 06:03:45.509089128
+min 	3.027948e+07 	83.000000 	40.499135 	-74.254937 	0 days 00:01:00
+25% 	3.079934e+07 	10314.000000 	40.668926 	-73.970957 	0 days 01:16:30
+50% 	3.130675e+07 	11209.000000 	40.717782 	-73.930774 	0 days 02:42:38
+75% 	3.179091e+07 	11238.000000 	40.782973 	-73.875788 	0 days 05:20:24
+max 	3.231065e+07 	11697.000000 	40.912869 	-73.700760 	24 days 16:52:22
+
+# viewing the columns
+dataset.columns
+
+Index(['Unique Key', 'Created Date', 'Closed Date', 'Agency', 'Complaint Type',
+       'Descriptor', 'Location Type', 'Incident Zip', 'City',
+       'Resolution Description', 'Borough', 'Latitude', 'Longitude',
+       'Request_Closing_Time'],
+      dtype='object')
+
+We will analyse Agency, Complaint Type, Descriptor, Location Type, City, Borough
+
+# All the complaints are under the same agency
+dataset['Agency'].value_counts()
+
+NYPD    291107
+Name: Agency, dtype: int64
+
+# complaint types
+dataset['Complaint Type'].value_counts()
+
+Blocked Driveway            76676
+Illegal Parking             74021
+Noise - Street/Sidewalk     47747
+Noise - Commercial          35144
+Derelict Vehicle            17506
+Noise - Vehicle             16868
+Animal Abuse                 7744
+Traffic                      4466
+Noise - Park                 3927
+Vending                      3773
+Drinking                     1270
+Noise - House of Worship      920
+Posting Advertisement         647
+Disorderly Youth              285
+Graffiti                      113
+Name: Complaint Type, dtype: int64
+
+# plotting the complaint types
+dataset['Complaint Type'].value_counts().plot(kind = 'bar', figsize=(15, 7), title='Complaint Types', ylabel='Count', grid=True)
+
+<AxesSubplot:title={'center':'Complaint Types'}, ylabel='Count'>
+
+    so Blocked Driveway is the Maximum Complaint type followed by Illegal Parking, Noise-Street/Sidewalk, Noise-Commercial
+
+# Descriptors
+dataset['Descriptor'].value_counts()
+
+Loud Music/Party                  60444
+No Access                         56725
+Posted Parking Sign Violation     22103
+Loud Talking                      21254
+Partial Access                    19951
+With License Plate                17506
+Blocked Hydrant                   15837
+Commercial Overnight Parking      11908
+Car/Truck Music                   11114
+Blocked Sidewalk                  10930
+Double Parked Blocking Traffic     5558
+Double Parked Blocking Vehicle     4147
+Engine Idling                      4134
+Banging/Pounding                   4090
+Neglected                          3771
+Car/Truck Horn                     3477
+Congestion/Gridlock                2736
+In Prohibited Area                 2017
+Other (complaint details)          1961
+Unlicensed                         1756
+Overnight Commercial Storage       1746
+Unauthorized Bus Layover           1333
+Truck Route Violation              1010
+In Public                           923
+Tortured                            849
+Vehicle                             587
+Chained                             534
+Detached Trailer                    459
+No Shelter                          381
+Chronic Stoplight Violation         280
+Underage - Licensed Est             270
+Chronic Speeding                    266
+In Car                              248
+Playing in Unsuitable Place         245
+Drag Racing                         174
+Loud Television                      93
+Police Report Requested              90
+After Hours - Licensed Est           77
+Building                             60
+Nuisance/Truant                      40
+Police Report Not Requested          23
+Name: Descriptor, dtype: int64
+
+# plotting top 10 Descriptors
+dataset['Descriptor'].value_counts().head(10).plot(kind='barh', grid=True, figsize=(10,5), title='Top 10 Descriptors')
+
+<AxesSubplot:title={'center':'Top 10 Descriptors'}>
+
+    So Loud Music/Party is the maximum descriptor for the complaints followed by No Access, Posted Parking Sign Violation and Loud Taking.
+
+# Top 10 Location Type
+dataset['Location Type'].value_counts().head(10)
+
+Street/Sidewalk               242765
+Store/Commercial               19425
+Club/Bar/Restaurant            17172
+Residential Building/House      5753
+Park/Playground                 4246
+House of Worship                 920
+Residential Building             226
+Highway                          196
+Parking Lot                      116
+House and Store                   93
+Name: Location Type, dtype: int64
+
+# plotting Top 10 Location Type
+dataset['Location Type'].value_counts().head(10).plot(kind='barh', grid=True, figsize=(10, 5), title='Top 10 Location Type')
+
+<AxesSubplot:title={'center':'Top 10 Location Type'}>
+
+    So we see that the Location Type of Street/Sidewalk is a lot more than any other members of its category
+
+# City
+dataset['City'].value_counts().head(10)
+
+BROOKLYN         96858
+NEW YORK         61935
+BRONX            40216
+STATEN ISLAND    12211
+JAMAICA           7155
+ASTORIA           6254
+FLUSHING          5916
+RIDGEWOOD         5124
+CORONA            4265
+WOODSIDE          3493
+Name: City, dtype: int64
+
+# plotting the cities
+dataset['City'].value_counts().head(10).plot(kind='barh', grid=True, figsize=(10, 5), title='City Column', ylabel='Cities')
+plt.xlabel('Complaint Counts')
+
+Text(0.5, 0, 'Complaint Counts')
+
+    So most complaints are from BROOKLYN followed New York, Bronx, Staten Island in City wise
+
+# Borough
+dataset['Borough'].value_counts().head(10).plot(kind='barh', grid=True, figsize=(10, 5), title='Borough Column', ylabel='Borough')
+plt.xlabel('Complaint Counts')
+
+Text(0.5, 0, 'Complaint Counts')
+
+    So most complaints are from BROOKLYN followed Queens, Manhattan, Bronx and Staten Island in Borough wise
+
+Till now we only analyse one column. Lets analyse Borough and Complaint Types
+
+    Borough per Complaint Type
+
+# Top Complaints
+top_6_complaints = dataset['Complaint Type'].value_counts()[:6].keys()
+top_6_complaints
+
+Index(['Blocked Driveway', 'Illegal Parking', 'Noise - Street/Sidewalk',
+       'Noise - Commercial', 'Derelict Vehicle', 'Noise - Vehicle'],
+      dtype='object')
+
+# Borough per Complaints
+borough_complaints = dataset.groupby(['Borough', 'Complaint Type']).size().unstack()
+borough_complaints = borough_complaints[top_6_complaints]
+borough_complaints
+
+Complaint Type 	Blocked Driveway 	Illegal Parking 	Noise - Street/Sidewalk 	Noise - Commercial 	Derelict Vehicle 	Noise - Vehicle
+Borough 						
+BRONX 	12740 	7829 	8864 	2431 	1948 	3385
+BROOKLYN 	28119 	27386 	13315 	11451 	5164 	5145
+MANHATTAN 	2055 	11981 	20362 	14528 	530 	5374
+QUEENS 	31621 	21944 	4391 	6057 	8102 	2608
+STATEN ISLAND 	2141 	4881 	815 	677 	1762 	356
+
+# Plotting Borough per Complaint Type 
+col_number = 2
+row_number = 3
+fig, axes = plt.subplots(row_number,col_number, figsize=(12,8))
+
+for i, (label,col) in enumerate(borough_complaints.iteritems()):
+    ax = axes[int(i/col_number), i%col_number]
+    col = col.sort_values(ascending=True)[:15]
+    col.plot(kind='barh', ax=ax, grid=True)
+    ax.set_title(label)
+    
+plt.tight_layout()
+
+ANALYSIS:
+
+- Blocked Driveway is maximum in QUEENS
+- Illegal Parking is maximum in BROOKLYN
+- Noise - Street/Sidewalk is maximum in MANHATTAN
+- Noise - Commercial is maximum in MANHATTAN
+- Derelict Vehicle is maximum in QUEENS
+- Noise - Vehicle is maximum in QUEENS
+
+    Similarly for Complaints per Borough
+
+# similarly for Complaints per Borough
+top_borough = dataset['Borough'].value_counts().keys()
+
+complaint_per_borough = dataset.groupby(['Complaint Type', 'Borough']).size().unstack()
+complaint_per_borough = complaint_per_borough[top_borough]
+complaint_per_borough
+
+Borough 	BROOKLYN 	QUEENS 	MANHATTAN 	BRONX 	STATEN ISLAND
+Complaint Type 					
+Animal Abuse 	2390 	1874 	1511 	1412 	557
+Blocked Driveway 	28119 	31621 	2055 	12740 	2141
+Derelict Vehicle 	5164 	8102 	530 	1948 	1762
+Disorderly Youth 	72 	59 	68 	63 	23
+Drinking 	257 	357 	294 	187 	175
+Graffiti 	43 	37 	22 	9 	2
+Illegal Parking 	27386 	21944 	11981 	7829 	4881
+Noise - Commercial 	11451 	6057 	14528 	2431 	677
+Noise - House of Worship 	338 	297 	189 	79 	17
+Noise - Park 	1537 	634 	1167 	522 	67
+Noise - Street/Sidewalk 	13315 	4391 	20362 	8864 	815
+Noise - Vehicle 	5145 	2608 	5374 	3385 	356
+Posting Advertisement 	45 	30 	41 	16 	515
+Traffic 	1082 	1302 	1531 	355 	196
+Vending 	514 	477 	2380 	377 	25
+
+# Plotting Complaints per Borough
+col_number = 2
+row_number = 3
+fig, axes = plt.subplots(row_number,col_number, figsize=(12,10))
+
+for i, (label,col) in enumerate(complaint_per_borough.iteritems()):
+    ax = axes[int(i/col_number), i%col_number]
+    col = col.sort_values(ascending=True)[:15]
+    col.plot(kind='barh', ax=ax, grid=True)
+    ax.set_title(label)
+    
+plt.tight_layout()
+
+
+- BROOKLYN, QUEENS and BRONX has most complaints of Blocked Driveway.
+- MANHATTAN has most complaints of Noise - Street/Sidewalk.
+- STATEN ISLAND has most complaints of Illegal Parking.
+
