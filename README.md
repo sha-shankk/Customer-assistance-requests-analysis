@@ -29,7 +29,7 @@ To get started, follow these steps:
 
 bash
 
-git clone https://github.com/your_username/customer-assistance-analysis.git
+git clone https://github.com/sha-shankk/Customer-assistance-requests-analysis.git
 
     Install the required dependencies:
 
